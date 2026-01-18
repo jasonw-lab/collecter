@@ -7,6 +7,7 @@ import re
 import sys
 import time
 from pathlib import Path
+from typing import List, Optional
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote_plus
 from urllib.request import Request, urlopen
@@ -17,7 +18,7 @@ from PIL import Image
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
 
-def http_get(url: str, timeout: int = 20, headers: dict | None = None) -> bytes:
+def http_get(url: str, timeout: int = 20, headers: Optional[dict] = None) -> bytes:
     req_headers = {"User-Agent": USER_AGENT}
     if headers:
         req_headers.update(headers)
@@ -37,7 +38,7 @@ def fetch_vqd(query: str) -> str:
     return match.group(1)
 
 
-def search_image_candidates(query: str) -> list[str]:
+def search_image_candidates(query: str) -> List[str]:
     vqd = fetch_vqd(query)
     url = f"https://duckduckgo.com/i.js?l=us-en&o=json&q={quote_plus(query)}&vqd={vqd}"
     payload = http_get(
@@ -49,7 +50,7 @@ def search_image_candidates(query: str) -> list[str]:
     ).decode("utf-8", errors="ignore")
     data = json.loads(payload)
     results = data.get("results") or []
-    candidates: list[str] = []
+    candidates: List[str] = []
     for item in results:
         image_url = item.get("image")
         thumb_url = item.get("thumbnail")
@@ -60,7 +61,7 @@ def search_image_candidates(query: str) -> list[str]:
     return candidates
 
 
-def download_image(url: str, dest: Path, referer: str | None = None, timeout: int = 30) -> None:
+def download_image(url: str, dest: Path, referer: Optional[str] = None, timeout: int = 30) -> None:
     headers = {"User-Agent": USER_AGENT}
     if referer:
         headers["Referer"] = referer
